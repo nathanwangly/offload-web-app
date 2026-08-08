@@ -7,6 +7,8 @@
 // swap to supabaseRepo.js (a genuinely async network store) needs no call
 // site changes.
 
+import { DEFAULT_SETTINGS } from "./defaultSettings.js";
+
 const TASKS_KEY = "taskTracker/tasks";
 const SETTINGS_KEY = "taskTracker/settings";
 const SCHEMA_VERSION = 1;
@@ -21,26 +23,6 @@ function cloneTask(task) {
     completions: task.completions.map((c) => ({ ...c, date: new Date(c.date) })),
   };
 }
-
-const DEFAULT_SETTINGS = {
-  sensitivity: "Balanced",
-  defaultFrequencyUnit: "Week",
-  theme: "System",
-  colours: {
-    overdue: "appRed",
-    due: "appOrange",
-    upcoming: "appYellow",
-    notDueYet: "appGrey",
-  },
-  // Notification-readiness fields (schema exists, no UI/wiring yet — that's
-  // Stage 6). Kept here so nothing has to be retrofitted into the shape later.
-  notificationsEnabled: false,
-  notifyOverdue: true,
-  notifyDue: true,
-  notifyUpcoming: true,
-  notifyTime: "08:00",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-};
 
 // --- Serialization -----------------------------------------------------
 

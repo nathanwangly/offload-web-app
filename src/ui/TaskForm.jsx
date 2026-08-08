@@ -29,7 +29,7 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
   const [name, setName] = useState(task?.name ?? "");
   const [emoji, setEmoji] = useState(task?.emoji ?? "");
   const [frequencyAmount, setFrequencyAmount] = useState(
-    task?.frequencyAmount ?? 1
+    String(task?.frequencyAmount ?? 1)
   );
   const [frequencyUnit, setFrequencyUnit] = useState(
     task?.frequencyUnit ?? "Week"
@@ -45,7 +45,13 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
   const [saving, setSaving] = useState(false);
 
   const trimmedName = name.trim();
-  const canSave = trimmedName.length > 0 && !saving;
+  const parsedFrequencyAmount = Number(frequencyAmount);
+  const isFrequencyAmountValid =
+    frequencyAmount.trim() !== "" &&
+    Number.isInteger(parsedFrequencyAmount) &&
+    parsedFrequencyAmount >= 1 &&
+    parsedFrequencyAmount <= 999;
+  const canSave = trimmedName.length > 0 && isFrequencyAmountValid && !saving;
 
   async function handleSave() {
     setError("");
@@ -54,7 +60,7 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
       const input = {
         name,
         emoji,
-        frequencyAmount: Number(frequencyAmount),
+        frequencyAmount: parsedFrequencyAmount,
         frequencyUnit,
       };
       if (isEdit) {
@@ -115,21 +121,28 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
 
         <div className="form-field">
           <label htmlFor="task-frequency-amount">
-            Every {frequencyAmount} {frequencyUnit}
-            {Number(frequencyAmount) === 1 ? "" : "s"}
+            {isFrequencyAmountValid
+              ? `Every ${frequencyAmount} ${frequencyUnit}${
+                  parsedFrequencyAmount === 1 ? "" : "s"
+                }`
+              : `Every __ ${frequencyUnit}`}
           </label>
           <div className="frequency-row">
             <input
               id="task-frequency-amount"
               type="number"
               min={1}
-              max={365}
+              max={999}
               value={frequencyAmount}
-              onChange={(e) =>
-                setFrequencyAmount(
-                  Math.min(365, Math.max(1, Number(e.target.value) || 1))
-                )
-              }
+              onChange={(e) => setFrequencyAmount(e.target.value.slice(0, 3))}
+              onBlur={(e) => {
+                if (e.target.value.trim() === "") return;
+                const clamped = Math.min(
+                  999,
+                  Math.max(1, Math.round(Number(e.target.value) || 1))
+                );
+                setFrequencyAmount(String(clamped));
+              }}
             />
             <select
               value={frequencyUnit}

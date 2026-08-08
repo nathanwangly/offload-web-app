@@ -308,6 +308,28 @@
   min-width: 0;
 }
 
+.sign-out-section {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.sign-out-button {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.sign-out-button:hover {
+  color: var(--status-overdue);
+}
+
 .icon-button-small {
   width: 28px;
   height: 28px;

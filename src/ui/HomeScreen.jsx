@@ -3,6 +3,7 @@ import { repo } from "../data/repository.js";
 import { completeTask } from "../data/mutations.js";
 import { partitionAndSort } from "../domain/partitionAndSort.js";
 import { status as resolveStatus } from "../domain/status.js";
+import { signOut } from "../auth/auth.js";
 import TaskRow from "./TaskRow.jsx";
 import TaskForm from "./TaskForm.jsx";
 
@@ -19,6 +20,7 @@ export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");
   // null = closed, "new" = add form, a task object = edit form
   const [formTarget, setFormTarget] = useState(null);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
 
   const load = useCallback(async () => {
     const [t, s] = await Promise.all([repo.listTasks(), repo.getSettings()]);
@@ -138,6 +140,43 @@ export default function HomeScreen() {
           onDone={handleFormDone}
           onCancel={closeForm}
         />
+      )}
+
+      <div className="sign-out-section">
+        <button
+          type="button"
+          className="sign-out-button"
+          onClick={() => setConfirmingSignOut(true)}
+        >
+          Sign out
+        </button>
+      </div>
+
+      {confirmingSignOut && (
+        <div className="modal-backdrop" onClick={() => setConfirmingSignOut(false)}>
+          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Sign out?</h2>
+            </div>
+            <p>You&apos;ll need to sign back in to see your tasks.</p>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setConfirmingSignOut(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => signOut()}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

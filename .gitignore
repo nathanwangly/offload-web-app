@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Supabase credentials (safe to expose client-side, but keep out of git history)
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
