@@ -3,9 +3,9 @@ import { repo } from "../data/repository.js";
 import { completeTask } from "../data/mutations.js";
 import { partitionAndSort } from "../domain/partitionAndSort.js";
 import { status as resolveStatus } from "../domain/status.js";
-import { signOut } from "../auth/auth.js";
 import TaskRow from "./TaskRow.jsx";
 import TaskForm from "./TaskForm.jsx";
+import Menu from "./Menu.jsx";
 
 const SECTIONS = [
   { key: "overdue", label: (n) => `NEEDS ATTENTION (${n})` },
@@ -20,7 +20,7 @@ export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");
   // null = closed, "new" = add form, a task object = edit form
   const [formTarget, setFormTarget] = useState(null);
-  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [t, s] = await Promise.all([repo.listTasks(), repo.getSettings()]);
@@ -72,7 +72,17 @@ export default function HomeScreen() {
   return (
     <div className="app-shell">
       <div className="app-toolbar">
-        <h1>Your Tasks</h1>
+        <div className="app-toolbar-start">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+          <h1>Your Tasks</h1>
+        </div>
         <button
           type="button"
           className="icon-button"
@@ -82,6 +92,8 @@ export default function HomeScreen() {
           +
         </button>
       </div>
+
+      <Menu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div className="form-field">
         <input
@@ -140,43 +152,6 @@ export default function HomeScreen() {
           onDone={handleFormDone}
           onCancel={closeForm}
         />
-      )}
-
-      <div className="sign-out-section">
-        <button
-          type="button"
-          className="sign-out-button"
-          onClick={() => setConfirmingSignOut(true)}
-        >
-          Sign out
-        </button>
-      </div>
-
-      {confirmingSignOut && (
-        <div className="modal-backdrop" onClick={() => setConfirmingSignOut(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Sign out?</h2>
-            </div>
-            <p>You&apos;ll need to sign back in to see your tasks.</p>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setConfirmingSignOut(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => signOut()}
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
