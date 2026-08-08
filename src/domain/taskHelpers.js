@@ -25,6 +25,18 @@ export function getLastCompletedDate(task) {
 }
 
 /**
+ * Returns the completion record (`{ id, date }`) for the most recent
+ * completion, or null if there are none. Used where the record's id is
+ * needed (e.g. to remove/replace it), not just its date.
+ */
+export function getLastCompletion(task) {
+  if (!hasCompletions(task)) return null;
+  return task.completions.reduce((latest, c) =>
+    c.date.getTime() > latest.date.getTime() ? c : latest
+  );
+}
+
+/**
  * Clamp a numeric value between min and max (inclusive).
  * Used by thresholds.js to enforce the 1–14 day / 3–90 day bounds from §3.2.
  */

@@ -2,7 +2,9 @@
 // repo calls scattered across components — so "recompute schedule" /
 // duplicate-name checking / etc. each have exactly one place to live.
 
+import { differenceInCalendarDays } from "date-fns";
 import { repo } from "./repository.js";
+import { getLastCompletion } from "../domain/taskHelpers.js";
 
 function normalizeName(name) {
   return name.trim().toLowerCase();
@@ -50,7 +52,9 @@ export async function createTask(input) {
 }
 
 /**
- * Edit never touches completion history — only the task's own fields.
+ * Edits the task's own fields only — never touches completion history.
+ * Callers that also need to change the last-completed date (the edit form
+ * does) call updateLastCompleted() separately.
  * @param {string} id
  * @param {{name: string, emoji?: string, frequencyAmount: number, frequencyUnit: string}} input
  */
@@ -69,4 +73,23 @@ export async function editTask(id, input) {
 
 export async function deleteTask(id) {
   return repo.deleteTask(id);
+}
+
+/**
+ * Updates a task's most recent completion date, for the edit form's
+ * "last completed" field. Doesn't touch any earlier completion history —
+ * only ever adds, replaces, or removes the single latest record.
+ *
+ * @param {object} task - the full task, including its `completions` array
+ *   (as returned by repo.listTasks()/repo.createTask() etc.)
+ * @param {Date|null} date - the new last-completed date, or null to clear it
+ */
+export async function updateLastCompleted(task, date) {
+  const current = getLastCompletion(task);
+  const unchanged =
+    current && date && differenceInCalendarDays(date, current.date) === 0;
+  if (unchanged) return;
+
+  if (current) await repo.removeCompletion(current.id);
+  if (date) await repo.addCompletion(task.id, date);
 }

@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { createTask, editTask, deleteTask } from "../data/mutations.js";
+import {
+  createTask,
+  editTask,
+  deleteTask,
+  updateLastCompleted,
+} from "../data/mutations.js";
+import { getLastCompletedDate } from "../domain/taskHelpers.js";
+import EmojiPicker from "./EmojiPicker.jsx";
 
 const FREQUENCY_UNITS = ["Day", "Week", "Month", "Year"];
-const EMOJI_RE = /\p{Extended_Pictographic}/u;
 
 function todayInputValue() {
   const d = new Date();
   return d.toISOString().slice(0, 10);
 }
 
-// Spec §5.5: on every keystroke, if the last character typed is an emoji,
-// replace the whole field with just that character; otherwise, if the
-// field is non-empty, clear it. Net effect: zero or one emoji, never text.
-function nextEmojiValue(raw) {
-  if (!raw) return "";
-  const lastChar = [...raw].at(-1);
-  if (EMOJI_RE.test(lastChar)) return lastChar;
-  return "";
+function toInputValue(date) {
+  return date.toISOString().slice(0, 10);
 }
 
 /**
@@ -34,8 +34,13 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
   const [frequencyUnit, setFrequencyUnit] = useState(
     task?.frequencyUnit ?? "Week"
   );
-  const [lastCompleted, setLastCompleted] = useState(todayInputValue());
-  const [lastCompletedCleared, setLastCompletedCleared] = useState(false);
+  const existingLastCompleted = isEdit ? getLastCompletedDate(task) : null;
+  const [lastCompleted, setLastCompleted] = useState(
+    existingLastCompleted ? toInputValue(existingLastCompleted) : todayInputValue()
+  );
+  const [lastCompletedCleared, setLastCompletedCleared] = useState(
+    isEdit && !existingLastCompleted
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -54,6 +59,10 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
       };
       if (isEdit) {
         await editTask(task.id, input);
+        await updateLastCompleted(
+          task,
+          lastCompletedCleared ? null : new Date(lastCompleted)
+        );
       } else {
         await createTask({
           ...input,
@@ -101,13 +110,7 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
 
         <div className="form-field">
           <label htmlFor="task-emoji">Emoji (optional)</label>
-          <input
-            id="task-emoji"
-            type="text"
-            value={emoji}
-            placeholder="Tap to add emoji — e.g. 🧹"
-            onChange={(e) => setEmoji(nextEmojiValue(e.target.value))}
-          />
+          <EmojiPicker id="task-emoji" value={emoji} onChange={setEmoji} />
         </div>
 
         <div className="form-field">
@@ -141,18 +144,20 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
           </div>
         </div>
 
-        {!isEdit && (
-          <div className="form-field">
-            <label htmlFor="task-last-completed">Last completed (optional)</label>
-            {lastCompletedCleared ? (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setLastCompletedCleared(false)}
-              >
-                Select date
-              </button>
-            ) : (
+        <div className="form-field">
+          <label htmlFor="task-last-completed">
+            {isEdit ? "Last completed" : "Last completed (optional)"}
+          </label>
+          {lastCompletedCleared ? (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setLastCompletedCleared(false)}
+            >
+              Select date
+            </button>
+          ) : (
+            <div className="field-with-clear">
               <input
                 id="task-last-completed"
                 type="date"
@@ -160,20 +165,17 @@ export default function TaskForm({ mode, task, onDone, onCancel }) {
                 max={todayInputValue()}
                 onChange={(e) => setLastCompleted(e.target.value)}
               />
-            )}
-            {!lastCompletedCleared && (
-              <div className="field-hint">
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setLastCompletedCleared(true)}
-                >
-                  Clear (create as "new")
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              <button
+                type="button"
+                className="icon-button icon-button-small"
+                aria-label="Clear last completed date"
+                onClick={() => setLastCompletedCleared(true)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
 
         {error && <div className="field-error">{error}</div>}
 

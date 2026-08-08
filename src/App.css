@@ -296,3 +296,21 @@
   color: var(--status-overdue);
   border-color: var(--status-overdue);
 }
+
+.field-with-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-with-clear input {
+  flex: 1;
+  min-width: 0;
+}
+
+.icon-button-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  font-size: 13px;
+}
