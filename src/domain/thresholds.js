@@ -1,4 +1,4 @@
-import { startOfDay } from "date-fns";
+import { startOfDay, differenceInCalendarDays } from "date-fns";
 import { dueDate } from "./dueDate.js";
 import { getLastCompletedDate, clamp } from "./taskHelpers.js";
 import { SENSITIVITY_FACTORS } from "./sensitivityConfig.js";
@@ -38,7 +38,11 @@ export function thresholds(task, sensitivity) {
   if (!due) return null;
 
   const base = startOfDay(getLastCompletedDate(task));
-  const intervalMs = due.getTime() - base.getTime();
+  // Use calendar-day difference, not raw ms subtraction: `due` and `base`
+  // are both real epoch instants, so a DST transition between them would
+  // otherwise smuggle in a spurious extra/missing hour, corrupting the
+  // "nominal period regardless of time-of-day" guarantee described above.
+  const intervalMs = differenceInCalendarDays(due, base) * ONE_DAY_MS;
 
   const factors = SENSITIVITY_FACTORS[sensitivity];
 
